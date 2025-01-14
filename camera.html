@@ -62,6 +62,11 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        #errorMessage {
+            color: red;
+            font-size: 1.2rem;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -70,12 +75,14 @@
     <div id="loadingIndicator"></div>
     <button id="captureButton">Capture</button>
     <p id="message"></p>
+    <p id="errorMessage"></p>
     <canvas id="canvas"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
         const captureButton = document.getElementById('captureButton');
         const message = document.getElementById('message');
+        const errorMessage = document.getElementById('errorMessage');
         const canvas = document.getElementById('canvas');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const ctx = canvas.getContext('2d');
@@ -101,7 +108,9 @@
                 currentStream = stream; // Store the current stream
                 return stream;
             } catch (err) {
-                message.textContent = 'Error accessing webcam: ' + err.message;
+                errorMessage.textContent = 'Error accessing webcam: ' + err.message;
+                errorMessage.style.display = 'block';
+                captureButton.disabled = true;
                 return null;
             }
         }
