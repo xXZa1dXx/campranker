@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Capture</title>
+    <style>
+        video {
+            opacity: 0.7;
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid black;
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webcam Capture</h1>
+    <video id="webcam" autoplay></video>
+    <button id="captureButton">Capture</button>
+    <p id="message"></p>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const captureButton = document.getElementById('captureButton');
+        const message = document.getElementById('message');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Access the webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                message.textContent = 'Error accessing webcam: ' + err.message;
+            });
+
+        // Capture image when button is clicked
+        captureButton.addEventListener('click', () => {
+            // Set canvas size to match the video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Display success message
+            message.textContent = 'Success, it is saved!';
+
+            // Optionally, save the image
+            const imageData = canvas.toDataURL('image/png');
+            console.log('Captured image data URL: ', imageData);
+        });
+    </script>
+</body>
+</html>
