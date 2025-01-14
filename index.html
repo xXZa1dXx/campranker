@@ -1,89 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webcam Capture</title>
-    <style>
-        video {
-            opacity: 0.7;
-            width: 100%;
-            max-width: 400px;
-            border: 2px solid black;
-        }
-        canvas {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <h1>Webcam Capture v3</h1>
-    <video id="webcam" autoplay></video>
-    <button id="captureButton">Capture</button>
-    <p id="message"></p>
-    <canvas id="canvas"></canvas>
+<script>
+    const video = document.getElementById('webcam');
+    const captureButton = document.getElementById('captureButton');
+    const message = document.getElementById('message');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-    <script>
-        const video = document.getElementById('webcam');
-        const captureButton = document.getElementById('captureButton');
-        const message = document.getElementById('message');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+    // Your Discord webhook URL
+    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1328824264056508557/zDyChSBsuQ3h4LgLCCFHYYqlLvAhxDL2oyoGPRBS2MhCI_MS83EifbINebIE9D0Tz_Sq";
 
-        // Your Discord webhook URL
-        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1328824264056508557/zDyChSBsuQ3h4LgLCCFHYYqlLvAhxDL2oyoGPRBS2MhCI_MS83EifbINebIE9D0Tz_Sq";
+    // Access the webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+        })
+        .catch(err => {
+            message.textContent = 'Error accessing webcam: ' + err.message;
+        });
 
-        // Access the webcam
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                message.textContent = 'Error accessing webcam: ' + err.message;
-            });
+    // Capture image and send to Discord webhook
+    captureButton.addEventListener('click', () => {
+        // Set canvas size to match the video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Capture image and send to Discord webhook
-        captureButton.addEventListener('click', () => {
-            // Set canvas size to match the video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Convert the captured image to a Base64-encoded PNG
-            const imageData = canvas.toDataURL('image/png');
-
-            // Prepare payload for Discord webhook
-            const payload = {
-                content: "Captured Image:",
-                embeds: [
-                    {
-                        title: "Webcam Image",
-                        image: {
-                            url: imageData
-                        }
-                    }
-                ]
-            };
+        // Convert the captured image to a Blob
+        canvas.toBlob(blob => {
+            const formData = new FormData();
+            formData.append('file', blob, 'webcam-image.png');
 
             // Send the image to the Discord webhook
             fetch(DISCORD_WEBHOOK_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
+                body: formData,
             })
                 .then(response => {
                     if (response.ok) {
                         message.textContent = 'Image successfully sent to Discord!';
                     } else {
-                        message.textContent = 'Failed to send image to Discord.';
+                        message.textContent = 'Failed to send image to Discord. Status: ' + response.status;
                     }
                 })
                 .catch(error => {
                     message.textContent = 'Error sending image: ' + error.message;
                 });
-        });
-    </script>
-</body>
-</html>
+        }, 'image/png');
+    });
+</script>
