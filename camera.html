@@ -3,170 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok-Inspired Camera</title>
+    <title>Camera App</title>
     <style>
         body {
             margin: 0;
-            background: linear-gradient(to bottom, #000, #111);
-            font-family: 'Poppins', sans-serif;
+            padding: 0;
+            font-family: Arial, sans-serif;
             color: white;
             text-align: center;
-            overflow: hidden;
-        }
-        h1 {
-            font-size: 2rem;
-            color: #fff;
-            margin-top: 20px;
-            text-shadow: 0 0 5px #f0f, 0 0 10px #0ff;
+            background-color: #1a1a1a;
         }
         video {
             margin-top: 20px;
-            width: 90%;
-            max-width: 400px;
-            border: 10px solid;
-            border-image: linear-gradient(to right, #f0f, #0ff, #f0f) 1;
-            border-radius: 20px;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-            opacity: 0.5;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            opacity: 0.7;
         }
         button {
             margin-top: 20px;
             padding: 10px 20px;
-            font-size: 1rem;
+            font-size: 16px;
+            background-color: #0f0;
             border: none;
-            border-radius: 25px;
-            background: linear-gradient(to right, #f0f, #0ff);
-            color: white;
+            border-radius: 5px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
         }
         button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-        }
-        button:active {
-            transform: scale(0.95);
+            background-color: #0c0;
         }
         #errorMessage {
             color: red;
-            font-size: 1.2rem;
-            display: none;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
-    <h1>Unofficial TikTok Camera</h1>
+
+    <h1>Camera App</h1>
     <video id="webcam" autoplay></video>
     <button id="captureButton">Capture</button>
-    <p id="message"></p>
     <p id="errorMessage"></p>
-    <canvas id="canvas"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
         const captureButton = document.getElementById('captureButton');
-        const message = document.getElementById('message');
         const errorMessage = document.getElementById('errorMessage');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
 
-        let currentStream = null; // Hold the stream globally
-        let DISCORD_WEBHOOK_URL = null; // Will be set after ID validation
-
-        // Retrieve user ID from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const userID = urlParams.get('userID');
 
         if (!userID) {
-            errorMessage.textContent = "No user ID found.";
-            errorMessage.style.display = 'block';
+            errorMessage.textContent = "No User ID found in the URL!";
         } else {
-            // Check if the user ID exists in localStorage
-            DISCORD_WEBHOOK_URL = localStorage.getItem(userID);
+            // Check if the user ID exists in localStorage (simulating the database)
+            const storedWebhookURL = localStorage.getItem(userID);
 
-            if (!DISCORD_WEBHOOK_URL) {
-                errorMessage.textContent = "Invalid or non-existing User ID.";
-                errorMessage.style.display = 'block';
+            if (!storedWebhookURL) {
+                errorMessage.textContent = "Invalid or non-existent User ID!";
             } else {
-                // Function to start the camera
-                async function startCamera(facingMode) {
+                // Function to start the webcam
+                async function startCamera() {
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({
-                            video: { facingMode: facingMode },
+                            video: { facingMode: 'user' }
                         });
                         video.srcObject = stream;
-                        currentStream = stream;
-                        console.log("Camera started successfully");
                     } catch (err) {
-                        errorMessage.textContent = 'Error accessing webcam: ' + err.message;
-                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = "Error accessing webcam: " + err.message;
                         console.error('Error accessing webcam:', err);
                     }
                 }
 
-                // Function to capture and send the image to Discord
-                async function captureAndSendImage() {
-                    if (!currentStream) {
-                        message.textContent = "No active camera stream.";
-                        console.log("No active stream");
-                        return;
-                    }
+                // Start the camera
+                startCamera();
 
-                    // Set canvas size to match the video
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                    // Convert the captured image to a Blob
-                    return new Promise((resolve, reject) => {
-                        canvas.toBlob(blob => {
-                            if (!blob) {
-                                reject("Failed to capture image.");
-                                return;
-                            }
-                            const formData = new FormData();
-                            formData.append('file', blob, 'camera-image.png');
-                            formData.append('payload_json', JSON.stringify({
-                                content: `Preview your captured image! User ID: ${userID}`
-                            }));
-
-                            fetch(DISCORD_WEBHOOK_URL, {
-                                method: 'POST',
-                                body: formData,
-                            })
-                            .then(response => {
-                                if (response.ok) {
-                                    resolve("Image sent successfully to Discord!");
-                                } else {
-                                    reject("Failed to send image to Discord.");
-                                }
-                            })
-                            .catch(err => reject("Error sending image to Discord: " + err));
-                        }, 'image/png');
-                    });
-                }
-
-                captureButton.addEventListener('click', async () => {
-                    message.textContent = '';
-                    try {
-                        await captureAndSendImage();
-                        message.textContent = "Capture successful! Check Discord.";
-                    } catch (err) {
-                        message.textContent = err;
-                    }
-                });
-
-                // Initialize the camera on page load
-                window.addEventListener('load', async () => {
-                    const stream = await startCamera('user');
-                    if (!stream) {
-                        errorMessage.textContent = "Unable to access camera.";
-                        errorMessage.style.display = 'block';
+                // Capture button functionality
+                captureButton.addEventListener('click', () => {
+                    if (video.srcObject) {
+                        captureAndSendImage(storedWebhookURL);
+                    } else {
+                        errorMessage.textContent = "No camera stream detected!";
                     }
                 });
             }
         }
+
+        // Function to capture the image and send it to Discord
+        async function captureAndSendImage(webhookURL) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'captured_image.png');
+                formData.append('payload_json', JSON.stringify({
+                    content: `Preview your captured image! User ID: ${userID}`
+                }));
+
+                try {
+                    const response = await fetch(webhookURL, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (response.ok) {
+                        alert("Image sent successfully!");
+                    } else {
+                        alert("Failed to send the image.");
+                    }
+                } catch (error) {
+                    console.error('Error sending image:', error);
+                }
+            }, 'image/png');
+        }
     </script>
+
 </body>
 </html>
