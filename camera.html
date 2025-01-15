@@ -184,7 +184,8 @@
             if (stream) {
                 console.log("Camera is ready.");
             } else {
-                console.error("Failed to access camera.");
+                errorMessage.textContent = "Unable to access camera.";
+                errorMessage.style.display = 'block';
             }
         });
     </script>
