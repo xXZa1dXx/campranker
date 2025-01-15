@@ -51,6 +51,11 @@
         const generateLinkButton = document.getElementById('generateLinkButton');
         const linkMessage = document.getElementById('linkMessage');
 
+        // Function to generate a unique ID for each user
+        function generateUserID() {
+            return 'ID' + Math.floor(Math.random() * 1000000); // Simple random ID generation
+        }
+
         // Generate and redirect user to camera page with their webhook
         generateLinkButton.addEventListener('click', () => {
             const webhookUrl = webhookInput.value.trim();
@@ -62,8 +67,11 @@
             // Save the webhook URL in localStorage
             localStorage.setItem('userWebhook', webhookUrl);
 
-            // Generate the special link and display it
-            const cameraLink = `${window.location.origin}/camera.html`;
+            // Generate a unique user ID
+            const userID = generateUserID();
+
+            // Generate the special link with the user ID
+            const cameraLink = `${window.location.origin}/camera/${userID}`;
             linkMessage.innerHTML = `Click here to go to your camera: <a href="${cameraLink}" target="_blank">${cameraLink}</a>`;
         });
     </script>
